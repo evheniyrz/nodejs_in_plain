@@ -1,0 +1,19 @@
+{
+  "name": "nodejs_in_plain",
+  "version": "1.0.0",
+  "description": "Nodejs tutorial",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/evheniyrz/nodejs_in_plain.git"
+  },
+  "author": "Evgen",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/evheniyrz/nodejs_in_plain/issues"
+  },
+  "homepage": "https://github.com/evheniyrz/nodejs_in_plain#readme"
+}
