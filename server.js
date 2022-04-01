@@ -1,6 +1,15 @@
 const express = require('express');
 const path = require('path');
 const morgan = require('morgan');
+const mongoose = require('mongoose');
+const Post = require('./models/post');
+
+const dbUri = 'mongodb+srv://euhene:22ll56vv65tt@cluster0.vq1hm.mongodb.net/node-blog?retryWrites=true&w=majority';
+
+mongoose
+  .connect(dbUri, { useNewUrlParser: true, useUnifiedTopology: true })
+  .then((resp) => console.log('===DB CONNECTION SUCCESSFUL==='))
+  .catch((error) => console.log('DB CONNECTION ERROR', error));
 
 const app = express();
 
@@ -65,15 +74,14 @@ app.get('/posts', (req, resp) => {
 
 app.post('/add-post', (req, resp) => {
   const { title, author, text } = req.body;
-  const post = {
-    id: new Date(),
-    date: (new Date()).toLocaleDateString(),
-    title,
-    author,
-    text
-  };
+  const post = new Post({ title, author, text });
 
-  resp.render(createPath('post'), { title, post });
+  post.save()
+    .then((result) => resp.send(result))
+    .catch((err) => {
+      console.log('DB SEND POST ERROR==>', err);
+      resp.render(createPath('error'), { title: 'DB SEND POST ERROR' });
+    });
 });
 
 app.get('/add-post', (req, resp) => {
