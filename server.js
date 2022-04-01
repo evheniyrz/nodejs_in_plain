@@ -1,8 +1,10 @@
 const express = require('express');
 const path = require('path');
 const morgan = require('morgan');
+const methodOverride = require('method-override');
 const mongoose = require('mongoose');
 const Post = require('./models/post');
+const Contacts = require('./models/contacts');
 
 const dbUri = 'mongodb+srv://euhene:22ll56vv65tt@cluster0.vq1hm.mongodb.net/node-blog?retryWrites=true&w=majority';
 
@@ -25,6 +27,7 @@ app.listen(PORT, (err) => {
 
 app.use(morgan(':method :url :status :res[content-length] - :response-time ms'));
 app.use(express.urlencoded({ extended: false }));
+app.use(methodOverride('_method'));
 
 app.use(express.static('styles'));
 
@@ -35,12 +38,12 @@ app.get('/', (req, resp) => {
 
 app.get('/contacts', (req, resp) => {
   const title = 'Contacts';
-  const contacts = [
-    { name: 'Youtube', link: 'https://youtube.com' },
-    { name: 'Twitter', link: 'https://twitter.com' },
-    { name: 'GitHub', link: 'https://github.com' }
-  ];
-  resp.render(createPath('contacts'), { contacts, title });
+  Contacts.find()
+    .then((contacts) => resp.render(createPath('contacts'), { contacts, title }))
+    .catch((err) => {
+      console.log('DB GET CONTACTS ERROR==>', err);
+      resp.render(createPath('error'), { title: 'DB GET CONTACTS ERROR' });
+    });
 });
 
 app.get('/about-us', (req, resp) => {
@@ -48,28 +51,66 @@ app.get('/about-us', (req, resp) => {
 });
 
 app.get('/posts/:id', (req, resp) => {
-  const post = {
-    id: 1,
-    text: 'Lorem ipsum dolor sit amet consectetur adipisicing elit. Sapiente quidem provident, dolores, vero laboriosam nemo mollitia impedit unde fugit sint eveniet, minima odio ipsum sed recusandae aut iste aspernatur dolorem.',
-    date: '05.05.2021',
-    author: 'Me'
-  };
   const title = 'Post';
-  resp.render(createPath('post'), { title, post });
+  Post.findById(req.params.id)
+    .then((post) => {
+      resp.render(createPath('post'), { title, post })
+    })
+    .catch((err) => {
+      console.log('DB GET SINGLE POST ERROR==>', err);
+      resp.render(createPath('error'), { title: 'DB GET SINGLE POST ERROR' });
+    });
+});
+
+app.get('/edit/:id', (req, resp) => {
+  const title = 'Edit Post';
+  Post.findById(req.params.id)
+    .then((post) => {
+      resp.render(createPath('edit-post'), { title, post })
+    })
+    .catch((err) => {
+      console.log('DB GET SINGLE POST ERROR==>', err);
+      resp.render(createPath('error'), { title: 'DB GET SINGLE POST ERROR' });
+    });
+});
+
+app.put('/edit/:id', (req, resp) => {
+  const { title, author, text } = req.body;
+  const { id } = req.params.id;
+  Post.findByIdAndUpdate(id, { title, author, text })
+    .then((result) => {
+      resp.redirect(`/posts/${id}`)
+    })
+    .catch((err) => {
+      console.log('DB GET SINGLE POST ERROR==>', err);
+      resp.render(createPath('error'), { title: 'DB GET SINGLE POST ERROR' });
+    });
+});
+
+app.delete('/posts/:id', (req, resp) => {
+  const title = 'Post';
+  Post.findByIdAndDelete(req.params.id)
+    .then((result) => {
+      resp.sendStatus(200);
+    })
+    .catch((err) => {
+      console.log('DB GET SINGLE POST ERROR==>', err);
+      resp.render(createPath('error'), { title: 'DB GET SINGLE POST ERROR' });
+    });
 });
 
 app.get('/posts', (req, resp) => {
-  const posts = [
-    {
-      id: 1,
-      text: 'Lorem ipsum dolor sit amet consectetur adipisicing elit. Sapiente quidem provident, dolores, vero laboriosam nemo mollitia impedit unde fugit sint eveniet, minima odio ipsum sed recusandae aut iste aspernatur dolorem.',
-      date: '05.05.2021',
-      author: 'Me',
-      title: 'Awesome Post'
-    }
-  ];
   const title = 'Posts';
-  resp.render(createPath('posts'), { title, posts });
+  Post.find()
+    .sort({ createdAt: -1 })
+    .then((posts) => {
+      console.log('==POSTS==', posts)
+      resp.render(createPath('posts'), { title, posts })
+    })
+    .catch((err) => {
+      console.log('DB GET POSTS ERROR==>', err);
+      resp.render(createPath('error'), { title: 'DB GET POSTS ERROR' });
+    });
 });
 
 app.post('/add-post', (req, resp) => {
@@ -77,7 +118,7 @@ app.post('/add-post', (req, resp) => {
   const post = new Post({ title, author, text });
 
   post.save()
-    .then((result) => resp.send(result))
+    .then((result) => resp.redirect('/posts'))
     .catch((err) => {
       console.log('DB SEND POST ERROR==>', err);
       resp.render(createPath('error'), { title: 'DB SEND POST ERROR' });
