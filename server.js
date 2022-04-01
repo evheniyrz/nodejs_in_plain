@@ -15,6 +15,7 @@ app.listen(PORT, (err) => {
 });
 
 app.use(morgan(':method :url :status :res[content-length] - :response-time ms'));
+app.use(express.urlencoded({ extended: false }));
 
 app.use(express.static('styles'));
 
@@ -38,13 +39,41 @@ app.get('/about-us', (req, resp) => {
 });
 
 app.get('/posts/:id', (req, resp) => {
+  const post = {
+    id: 1,
+    text: 'Lorem ipsum dolor sit amet consectetur adipisicing elit. Sapiente quidem provident, dolores, vero laboriosam nemo mollitia impedit unde fugit sint eveniet, minima odio ipsum sed recusandae aut iste aspernatur dolorem.',
+    date: '05.05.2021',
+    author: 'Me'
+  };
   const title = 'Post';
-  resp.render(createPath('post'), { title });
+  resp.render(createPath('post'), { title, post });
 });
 
 app.get('/posts', (req, resp) => {
+  const posts = [
+    {
+      id: 1,
+      text: 'Lorem ipsum dolor sit amet consectetur adipisicing elit. Sapiente quidem provident, dolores, vero laboriosam nemo mollitia impedit unde fugit sint eveniet, minima odio ipsum sed recusandae aut iste aspernatur dolorem.',
+      date: '05.05.2021',
+      author: 'Me',
+      title: 'Awesome Post'
+    }
+  ];
   const title = 'Posts';
-  resp.render(createPath('posts'), { title });
+  resp.render(createPath('posts'), { title, posts });
+});
+
+app.post('/add-post', (req, resp) => {
+  const { title, author, text } = req.body;
+  const post = {
+    id: new Date(),
+    date: (new Date()).toLocaleDateString(),
+    title,
+    author,
+    text
+  };
+
+  resp.render(createPath('post'), { title, post });
 });
 
 app.get('/add-post', (req, resp) => {
